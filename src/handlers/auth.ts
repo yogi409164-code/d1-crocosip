@@ -1,3 +1,4 @@
+import { isResponse, requireAuth } from "../lib/auth";
 import { error, json, parseJson } from "../lib/http";
 import { createToken, getJwtSecret } from "../lib/jwt";
 import { generateOtp, hashOtp, isExpired, otpExpiresAt } from "../lib/otp";
@@ -93,4 +94,26 @@ export async function verifyOtp(request: Request, env: Env): Promise<Response> {
 		user_id: user.id,
 		role: user.role,
 	});
+}
+
+export async function getMe(request: Request, env: Env): Promise<Response> {
+	const user = await requireAuth(request, env);
+	if (isResponse(user)) return user;
+	return json({
+		id: user.id,
+		name: user.name,
+		phone: user.phone,
+		email: user.email,
+		role: user.role,
+	});
+}
+
+export async function updateMe(request: Request, env: Env): Promise<Response> {
+	const user = await requireAuth(request, env);
+	if (isResponse(user)) return user;
+	const body = await parseJson<{ name?: string; email?: string }>(request);
+	await env.DB.prepare("UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?")
+		.bind(body?.name ?? null, body?.email ?? null, user.id)
+		.run();
+	return json({ message: "Profile updated", success: true });
 }
