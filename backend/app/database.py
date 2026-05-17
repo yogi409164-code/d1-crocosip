@@ -23,3 +23,19 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def check_db_connection() -> tuple[bool, str, float | None]:
+    """Run SELECT 1 to verify MySQL is reachable. Returns (ok, message, latency_ms)."""
+    from time import perf_counter
+
+    from sqlalchemy import text
+
+    try:
+        start = perf_counter()
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        latency_ms = round((perf_counter() - start) * 1000, 2)
+        return True, "Database connected successfully", latency_ms
+    except Exception as exc:
+        return False, str(exc), None
