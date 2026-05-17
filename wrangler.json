@@ -1,0 +1,16 @@
+{
+	"compatibility_date": "2025-10-08",
+	"main": "src/index.ts",
+	"name": "d1-crocosip",
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_id": "d87d689c-b6ad-4418-ab34-e2a8f1d4c1f4",
+			"database_name": "croco"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}
