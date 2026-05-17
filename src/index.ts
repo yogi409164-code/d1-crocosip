@@ -1,58 +1,5 @@
+import { getDbPayload } from "./db";
 import { renderDbHealthHtml } from "./renderHtml";
-
-type DbPayload = {
-	success: boolean;
-	database: string;
-	status: string;
-	message: string;
-	latency_ms: number | null;
-	database_name?: string;
-	tables?: string[];
-	row_counts?: Record<string, number>;
-	data?: Record<string, unknown> | null;
-};
-
-async function getDbPayload(env: Env): Promise<DbPayload> {
-	const start = Date.now();
-	try {
-		await env.DB.prepare("SELECT 1 AS ok").first();
-		const latencyMs = Date.now() - start;
-
-		const { results: comments } = await env.DB.prepare(
-			"SELECT * FROM comments ORDER BY id",
-		).all();
-
-		const countRow = await env.DB.prepare<{ total: number }>(
-			"SELECT COUNT(*) AS total FROM comments",
-		).first();
-
-		const { results: tables } = await env.DB.prepare<{ name: string }>(
-			"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
-		).all();
-
-		return {
-			success: true,
-			database: "connected",
-			status: "ok",
-			message: "D1 database connected successfully",
-			latency_ms: latencyMs,
-			database_name: "croco",
-			tables: tables.map((t) => t.name),
-			row_counts: { comments: countRow?.total ?? 0 },
-			data: { comments },
-		};
-	} catch (err) {
-		const message = err instanceof Error ? err.message : String(err);
-		return {
-			success: false,
-			database: "disconnected",
-			status: "error",
-			message,
-			latency_ms: null,
-			data: null,
-		};
-	}
-}
 
 export default {
 	async fetch(request, env) {

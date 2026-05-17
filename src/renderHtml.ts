@@ -47,7 +47,7 @@ export function renderDbHealthHtml(payload: {
     <h2>Row counts</h2>
     <pre><code>${tablesJson}</code></pre>
     <h2>Data</h2>
-    <pre><code><span style="color: #0E838F">&gt; </span>SELECT * FROM comments;<br>${dataJson}</code></pre>
+    <pre><code>${dataJson}</code></pre>
   </main>
 </body>
 </html>`;
