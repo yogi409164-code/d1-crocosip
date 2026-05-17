@@ -1,6 +1,18 @@
-import { renderHtml } from "./renderHtml";
+import { renderDbHealthHtml } from "./renderHtml";
 
-async function checkDb(env: Env): Promise<Response> {
+type DbPayload = {
+	success: boolean;
+	database: string;
+	status: string;
+	message: string;
+	latency_ms: number | null;
+	database_name?: string;
+	tables?: string[];
+	row_counts?: Record<string, number>;
+	data?: Record<string, unknown> | null;
+};
+
+async function getDbPayload(env: Env): Promise<DbPayload> {
 	const start = Date.now();
 	try {
 		await env.DB.prepare("SELECT 1 AS ok").first();
@@ -18,7 +30,7 @@ async function checkDb(env: Env): Promise<Response> {
 			"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
 		).all();
 
-		return Response.json({
+		return {
 			success: true,
 			database: "connected",
 			status: "ok",
@@ -28,20 +40,17 @@ async function checkDb(env: Env): Promise<Response> {
 			tables: tables.map((t) => t.name),
 			row_counts: { comments: countRow?.total ?? 0 },
 			data: { comments },
-		});
+		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		return Response.json(
-			{
-				success: false,
-				database: "disconnected",
-				status: "error",
-				message,
-				latency_ms: null,
-				data: null,
-			},
-			{ status: 503 },
-		);
+		return {
+			success: false,
+			database: "disconnected",
+			status: "error",
+			message,
+			latency_ms: null,
+			data: null,
+		};
 	}
 }
 
@@ -50,20 +59,28 @@ export default {
 		const { pathname } = new URL(request.url);
 
 		if (pathname === "/health/db" || pathname === "/api/db/test") {
-			return checkDb(env);
+			const payload = await getDbPayload(env);
+			if (!payload.success && pathname === "/api/db/test") {
+				return Response.json(payload, { status: 503 });
+			}
+			return Response.json(payload);
+		}
+
+		if (pathname === "/health/db/view") {
+			const payload = await getDbPayload(env);
+			return new Response(renderDbHealthHtml(payload), {
+				headers: { "content-type": "text/html; charset=utf-8" },
+			});
 		}
 
 		if (pathname === "/health") {
 			return Response.json({ status: "healthy", api: "ok" });
 		}
 
-		const stmt = env.DB.prepare("SELECT * FROM comments LIMIT 3");
-		const { results } = await stmt.all();
+		if (pathname === "/") {
+			return Response.redirect(new URL("/health/db/view", request.url), 302);
+		}
 
-		return new Response(renderHtml(JSON.stringify(results, null, 2)), {
-			headers: {
-				"content-type": "text/html",
-			},
-		});
+		return Response.json({ error: "Not found" }, { status: 404 });
 	},
 } satisfies ExportedHandler<Env>;
