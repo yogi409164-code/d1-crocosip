@@ -191,6 +191,13 @@ dist
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,node,git
 
+### Python ###
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
 ### Wrangler ###
 .wrangler/
 .env*
