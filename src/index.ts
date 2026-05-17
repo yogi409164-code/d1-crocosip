@@ -1,8 +1,14 @@
 import { getDbPayload } from "./db";
+import { handleApi } from "./router";
 import { renderDbHealthHtml } from "./renderHtml";
 
 export default {
 	async fetch(request, env) {
+		const apiResponse = await handleApi(request, env);
+		if (apiResponse) {
+			return apiResponse;
+		}
+
 		const { pathname } = new URL(request.url);
 
 		if (pathname === "/health/db" || pathname === "/api/db/test") {

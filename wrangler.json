@@ -12,5 +12,8 @@
 	],
 	"observability": {
 		"enabled": true
+	},
+	"vars": {
+		"JWT_SECRET": "fruitzila-worker-change-in-production"
 	}
 }
