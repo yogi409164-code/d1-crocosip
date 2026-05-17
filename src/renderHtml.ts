@@ -39,9 +39,9 @@ export function renderDbHealthHtml(payload: {
       <p><strong>Latency:</strong> ${payload.latency_ms ?? "—"} ms</p>
       <p><strong>Tables:</strong> ${tableList}</p>
       <p>
+        <a href="/docs">API Docs</a> ·
         <a href="/health/db">JSON</a> ·
-        <a href="/health/db/view">Refresh</a> ·
-        <a href="/">Home</a>
+        <a href="/health/db/view">Refresh</a>
       </p>
     </div>
     <h2>Row counts</h2>

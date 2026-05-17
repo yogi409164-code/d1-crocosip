@@ -1,15 +1,27 @@
 import { getDbPayload } from "./db";
+import { openApiJson, redocUi, swaggerUi } from "./handlers/docs";
 import { handleApi } from "./router";
 import { renderDbHealthHtml } from "./renderHtml";
 
 export default {
 	async fetch(request, env) {
+		const { pathname } = new URL(request.url);
+		const method = request.method;
+
+		if (method === "GET" && pathname === "/docs") {
+			return swaggerUi(request);
+		}
+		if (method === "GET" && pathname === "/openapi.json") {
+			return openApiJson(request);
+		}
+		if (method === "GET" && pathname === "/redoc") {
+			return redocUi(request);
+		}
+
 		const apiResponse = await handleApi(request, env);
 		if (apiResponse) {
 			return apiResponse;
 		}
-
-		const { pathname } = new URL(request.url);
 
 		if (pathname === "/health/db" || pathname === "/api/db/test") {
 			const payload = await getDbPayload(env);
@@ -31,7 +43,7 @@ export default {
 		}
 
 		if (pathname === "/") {
-			return Response.redirect(new URL("/health/db/view", request.url), 302);
+			return Response.redirect(new URL("/docs", request.url), 302);
 		}
 
 		return Response.json({ error: "Not found" }, { status: 404 });
