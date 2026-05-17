@@ -39,3 +39,40 @@ def check_db_connection() -> tuple[bool, str, float | None]:
         return True, "Database connected successfully", latency_ms
     except Exception as exc:
         return False, str(exc), None
+
+
+def _serialize_value(value: object) -> object:
+    from datetime import date, datetime
+    from decimal import Decimal
+
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
+
+
+def _serialize_row(row: dict) -> dict:
+    return {key: _serialize_value(val) for key, val in row.items()}
+
+
+def fetch_db_sample_data(limit: int = 50) -> dict:
+    """Return row counts and rows from every table."""
+    from sqlalchemy import inspect, text
+
+    data: dict = {}
+    tables_info: dict[str, int] = {}
+
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        table_names = inspector.get_table_names()
+
+        for table in table_names:
+            count = conn.execute(text(f"SELECT COUNT(*) FROM `{table}`")).scalar()
+            tables_info[table] = int(count or 0)
+            rows = conn.execute(text(f"SELECT * FROM `{table}` LIMIT :lim"), {"lim": limit}).mappings().all()
+            data[table] = [_serialize_row(dict(row)) for row in rows]
+
+    return {"tables": tables_info, "data": data}
