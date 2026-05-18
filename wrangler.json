@@ -14,6 +14,9 @@
 		"enabled": true
 	},
 	"vars": {
-		"JWT_SECRET": "fruitzila-worker-change-in-production"
+		"JWT_SECRET": "fruitzila-worker-change-in-production",
+		"MSG91_TEMPLATE_ID": "69c3d59519282f470f0ff0a3",
+		"MSG91_SENDER_ID": "msg91",
+		"MSG91_COUNTRY_CODE": "91"
 	}
 }

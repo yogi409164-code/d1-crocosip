@@ -13,6 +13,19 @@ def generate_otp() -> str:
     return "".join(random.choices(string.digits, k=settings.otp_length))
 
 
+async def dispatch_otp(db: Session, phone: str, otp: str) -> tuple[bool, str, str | None]:
+    """Store OTP and send via MSG91 if configured. Returns (success, message, dev_otp)."""
+    from app.services.msg91 import send_otp_sms
+
+    store_otp(db, phone, otp)
+    if settings.msg91_auth_key and settings.msg91_template_id:
+        ok, msg = await send_otp_sms(phone, otp)
+        return ok, msg, None
+    if settings.debug:
+        return True, "OTP sent successfully (dev mode)", otp
+    return False, "SMS provider not configured", None
+
+
 def store_otp(db: Session, phone: str, otp: str) -> None:
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.otp_expire_minutes)
     db.query(OtpVerification).filter(OtpVerification.phone == phone, OtpVerification.verified.is_(False)).delete()

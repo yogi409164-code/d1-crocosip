@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100),
     phone VARCHAR(15) NOT NULL UNIQUE,
-    email VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    password_hash VARCHAR(255),
+    phone_verified BOOLEAN DEFAULT 0,
+    email_verified BOOLEAN DEFAULT 0,
     role ENUM('customer', 'admin', 'delivery') NOT NULL DEFAULT 'customer',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

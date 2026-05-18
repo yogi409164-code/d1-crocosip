@@ -8,12 +8,17 @@ function b64urlDecode(str: string): string {
 	return atob(base64);
 }
 
-export type JwtPayload = { sub: string; role: string; exp: number };
+export type JwtPayload = { sub: string; uid: number; role: string; exp: number };
 
-export async function createToken(phone: string, role: string, secret: string): Promise<string> {
+export async function createToken(
+	userId: number,
+	subject: string,
+	role: string,
+	secret: string,
+): Promise<string> {
 	const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
 	const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7;
-	const payload = b64url(JSON.stringify({ sub: phone, role, exp }));
+	const payload = b64url(JSON.stringify({ sub: subject, uid: userId, role, exp }));
 	const data = `${header}.${payload}`;
 	const sigStr = await sign(data, secret);
 	return `${data}.${sigStr}`;
@@ -35,11 +40,11 @@ export async function verifyToken(token: string, secret: string): Promise<JwtPay
 	try {
 		const parts = token.split(".");
 		if (parts.length !== 3) return null;
-		const [header, payload, sig] = parts;
-		const data = `${header}.${payload}`;
+		const [header, payloadPart, sig] = parts;
+		const data = `${header}.${payloadPart}`;
 		const expected = await sign(data, secret);
 		if (sig !== expected) return null;
-		const decoded = JSON.parse(b64urlDecode(payload)) as JwtPayload;
+		const decoded = JSON.parse(b64urlDecode(payloadPart)) as JwtPayload & { uid?: number };
 		if (decoded.exp < Math.floor(Date.now() / 1000)) return null;
 		return decoded;
 	} catch {

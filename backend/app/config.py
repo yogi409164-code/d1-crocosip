@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     phonepe_merchant_id: str = ""
     phonepe_salt_key: str = ""
     debug: bool = True
+    msg91_auth_key: str = ""
+    msg91_template_id: str = ""
+    msg91_sender_id: str = ""
+    msg91_country_code: str = "91"
 
 
 settings = Settings()

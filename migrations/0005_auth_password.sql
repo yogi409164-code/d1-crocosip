@@ -1,0 +1,5 @@
+-- Migration number: 0005 	 2026-05-18T00:00:00.000Z
+
+ALTER TABLE users ADD COLUMN password_hash TEXT;
+ALTER TABLE users ADD COLUMN phone_verified INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0;

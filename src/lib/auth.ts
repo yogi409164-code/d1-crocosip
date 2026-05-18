@@ -23,15 +23,22 @@ export async function requireAuth(
 	if (!payload) {
 		return error("Invalid or expired token", 401);
 	}
-	const user = await env.DB.prepare<{
-		id: number;
-		phone: string;
-		name: string;
-		email: string | null;
-		role: string;
-	}>("SELECT id, phone, name, email, role FROM users WHERE phone = ?")
-		.bind(payload.sub)
-		.first();
+
+	let user = null;
+	if (payload.uid) {
+		user = await env.DB.prepare<AuthUser>(
+			"SELECT id, phone, name, email, role FROM users WHERE id = ?",
+		)
+			.bind(payload.uid)
+			.first();
+	}
+	if (!user) {
+		user = await env.DB.prepare<AuthUser>(
+			"SELECT id, phone, name, email, role FROM users WHERE phone = ? OR email = ?",
+		)
+			.bind(payload.sub, payload.sub)
+			.first();
+	}
 	if (!user) {
 		return error("User not found", 401);
 	}

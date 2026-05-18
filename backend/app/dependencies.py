@@ -18,7 +18,12 @@ def get_current_user(
     payload = decode_access_token(credentials.credentials)
     if not payload or "sub" not in payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user = db.query(User).filter(User.phone == payload["sub"]).first()
+    user = None
+    if payload.get("uid"):
+        user = db.query(User).filter(User.id == payload["uid"]).first()
+    if not user:
+        sub = payload["sub"]
+        user = db.query(User).filter((User.phone == sub) | (User.email == sub)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user

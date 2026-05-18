@@ -1,4 +1,15 @@
-import { getMe, sendOtp, updateMe, verifyOtp } from "./handlers/auth";
+import {
+	getMe,
+	loginEmail,
+	loginMobileSendOtp,
+	loginMobileVerify,
+	register,
+	registerVerifyPhone,
+	sendOtp,
+	smsStatus,
+	updateMe,
+	verifyOtp,
+} from "./handlers/auth";
 import { analytics, dailyOrders, orderReports, paymentReports } from "./handlers/admin";
 import { calendarOrders } from "./handlers/calendar";
 import { createCoupon, listCoupons, validateCoupon } from "./handlers/coupons";
@@ -37,9 +48,26 @@ export async function handleApi(request: Request, env: Env): Promise<Response | 
 		return corsPreflight();
 	}
 
-	// Auth
+	// Auth — Register
+	if (pathname === "/api/auth/register" && method === "POST") return register(request, env);
+	if (pathname === "/api/auth/register/verify-phone" && method === "POST") {
+		return registerVerifyPhone(request, env);
+	}
+
+	// Auth — Login
+	if (pathname === "/api/auth/login/mobile/send-otp" && method === "POST") {
+		return loginMobileSendOtp(request, env);
+	}
+	if (pathname === "/api/auth/login/mobile/verify" && method === "POST") {
+		return loginMobileVerify(request, env);
+	}
+	if (pathname === "/api/auth/login/email" && method === "POST") return loginEmail(request, env);
+
+	// Legacy aliases
 	if (pathname === "/api/auth/send-otp" && method === "POST") return sendOtp(request, env);
 	if (pathname === "/api/auth/verify-otp" && method === "POST") return verifyOtp(request, env);
+
+	if (pathname === "/api/auth/sms-status" && method === "GET") return smsStatus(request, env);
 	if (pathname === "/api/auth/me" && method === "GET") return getMe(request, env);
 	if (pathname === "/api/auth/me" && method === "PUT") return updateMe(request, env);
 
