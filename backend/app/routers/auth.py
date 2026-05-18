@@ -19,7 +19,7 @@ from app.services.google import verify_google_id_token
 from app.services.otp import dispatch_otp, generate_otp, validate_otp
 from app.utils.security import create_access_token, hash_password, verify_password
 
-router = APIRouter(prefix="/api/auth", tags=["Auth"])
+router = APIRouter(prefix="/api/auth")
 
 
 def _token_response(user: User) -> TokenResponse:
@@ -35,7 +35,7 @@ def _normalize_phone(phone: str) -> str:
 
 # ─── REGISTER ───────────────────────────────────────────────
 
-@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED, tags=["Register"])
 async def register(body: RegisterRequest, db: Session = Depends(get_db)):
     phone = _normalize_phone(body.phone)
     email = body.email.lower()
@@ -68,7 +68,7 @@ async def register(body: RegisterRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.post("/register/verify-phone", response_model=TokenResponse)
+@router.post("/register/verify-phone", response_model=TokenResponse, tags=["Register"])
 def register_verify_phone(body: VerifyPhoneRequest, db: Session = Depends(get_db)):
     phone = _normalize_phone(body.phone)
     user = db.query(User).filter(User.phone == phone).first()
@@ -81,7 +81,7 @@ def register_verify_phone(body: VerifyPhoneRequest, db: Session = Depends(get_db
     return _token_response(user)
 
 
-@router.post("/register/google", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register/google", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED, tags=["Register"])
 async def register_google(body: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not body.phone:
         raise HTTPException(status_code=422, detail="phone is required for signup")
@@ -123,7 +123,7 @@ async def register_google(body: GoogleAuthRequest, db: Session = Depends(get_db)
 
 # ─── LOGIN ──────────────────────────────────────────────────
 
-@router.post("/login/mobile/send-otp", response_model=SendOtpResponse)
+@router.post("/login/mobile/send-otp", response_model=SendOtpResponse, tags=["Login"])
 async def login_mobile_send_otp(body: LoginMobileSendOtpRequest, db: Session = Depends(get_db)):
     phone = _normalize_phone(body.phone)
     if not db.query(User).filter(User.phone == phone).first():
@@ -135,7 +135,7 @@ async def login_mobile_send_otp(body: LoginMobileSendOtpRequest, db: Session = D
     return SendOtpResponse(message=message, sms_sent=True, otp=dev_otp)
 
 
-@router.post("/login/mobile/verify", response_model=TokenResponse)
+@router.post("/login/mobile/verify", response_model=TokenResponse, tags=["Login"])
 def login_mobile_verify(body: LoginMobileVerifyRequest, db: Session = Depends(get_db)):
     phone = _normalize_phone(body.phone)
     user = db.query(User).filter(User.phone == phone).first()
@@ -148,7 +148,7 @@ def login_mobile_verify(body: LoginMobileVerifyRequest, db: Session = Depends(ge
     return _token_response(user)
 
 
-@router.post("/login/email", response_model=TokenResponse)
+@router.post("/login/email", response_model=TokenResponse, tags=["Login"])
 def login_email(body: LoginEmailRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email.lower()).first()
     if not user:
@@ -158,7 +158,7 @@ def login_email(body: LoginEmailRequest, db: Session = Depends(get_db)):
     return _token_response(user)
 
 
-@router.post("/login/google", response_model=TokenResponse)
+@router.post("/login/google", response_model=TokenResponse, tags=["Login"])
 async def login_google(body: GoogleAuthRequest, db: Session = Depends(get_db)):
     google = await verify_google_id_token(body.id_token)
     if not google:
@@ -179,17 +179,17 @@ async def login_google(body: GoogleAuthRequest, db: Session = Depends(get_db)):
 
 
 # Legacy
-@router.post("/send-otp", response_model=SendOtpResponse, deprecated=True)
+@router.post("/send-otp", response_model=SendOtpResponse, deprecated=True, tags=["Login"])
 async def send_otp_legacy(body: LoginMobileSendOtpRequest, db: Session = Depends(get_db)):
     return await login_mobile_send_otp(body, db)
 
 
-@router.post("/verify-otp", response_model=TokenResponse, deprecated=True)
+@router.post("/verify-otp", response_model=TokenResponse, deprecated=True, tags=["Login"])
 def verify_otp_legacy(body: LoginMobileVerifyRequest, db: Session = Depends(get_db)):
     return login_mobile_verify(body, db)
 
 
-@router.get("/me")
+@router.get("/me", tags=["Profile"])
 def get_profile(user: User = Depends(get_current_user)):
     return {
         "id": user.id,
@@ -202,7 +202,7 @@ def get_profile(user: User = Depends(get_current_user)):
     }
 
 
-@router.put("/me", response_model=MessageResponse)
+@router.put("/me", response_model=MessageResponse, tags=["Profile"])
 def update_profile(body: dict, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if body.get("name"):
         user.name = body["name"]
