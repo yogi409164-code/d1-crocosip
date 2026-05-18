@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     msg91_template_id: str = ""
     msg91_sender_id: str = ""
     msg91_country_code: str = "91"
+    google_client_id: str = ""
 
 
 settings = Settings()

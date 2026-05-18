@@ -2,9 +2,9 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class RegisterRequest(BaseModel):
-    name: str = Field(..., max_length=100)
+    name: str = Field(..., min_length=1, max_length=100)
     phone: str = Field(..., min_length=10, max_length=15)
-    email: EmailStr | None = None
+    email: EmailStr
     password: str = Field(..., min_length=6, max_length=128)
 
 
@@ -23,6 +23,12 @@ class VerifyPhoneRequest(BaseModel):
     otp: str = Field(..., min_length=4, max_length=8)
 
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str = Field(..., description="Google Sign-In ID token")
+    phone: str | None = Field(None, description="Required for register/google only")
+    password: str | None = Field(None, min_length=6, description="Optional password for email login")
+
+
 class LoginMobileSendOtpRequest(BaseModel):
     phone: str = Field(..., min_length=10, max_length=15)
 
@@ -37,20 +43,11 @@ class LoginEmailRequest(BaseModel):
     password: str = Field(..., min_length=6)
 
 
-class SendOtpRequest(BaseModel):
-    phone: str = Field(..., min_length=10, max_length=15)
-
-
 class SendOtpResponse(BaseModel):
     message: str
     success: bool = True
     sms_sent: bool = True
     otp: str | None = None
-
-
-class VerifyOtpRequest(BaseModel):
-    phone: str = Field(..., min_length=10, max_length=15)
-    otp: str = Field(..., min_length=4, max_length=8)
 
 
 class ProfileUpdateRequest(BaseModel):

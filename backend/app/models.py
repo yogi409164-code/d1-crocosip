@@ -36,6 +36,7 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(15), unique=True, index=True)
     email: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
     password_hash: Mapped[str | None] = mapped_column(String(255))
+    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     phone_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.customer)

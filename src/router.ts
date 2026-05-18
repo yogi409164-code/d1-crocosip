@@ -1,15 +1,15 @@
 import {
-	getMe,
 	loginEmail,
+	loginGoogle,
 	loginMobileSendOtp,
 	loginMobileVerify,
+} from "./handlers/auth/login";
+import {
 	register,
+	registerGoogle,
 	registerVerifyPhone,
-	sendOtp,
-	smsStatus,
-	updateMe,
-	verifyOtp,
-} from "./handlers/auth";
+} from "./handlers/auth/register";
+import { getMe, smsStatus, updateMe } from "./handlers/auth/profile";
 import { analytics, dailyOrders, orderReports, paymentReports } from "./handlers/admin";
 import { calendarOrders } from "./handlers/calendar";
 import { createCoupon, listCoupons, validateCoupon } from "./handlers/coupons";
@@ -48,25 +48,38 @@ export async function handleApi(request: Request, env: Env): Promise<Response | 
 		return corsPreflight();
 	}
 
-	// Auth — Register
+	// ─── REGISTER (/api/auth/register/*) ───────────────────────
 	if (pathname === "/api/auth/register" && method === "POST") return register(request, env);
 	if (pathname === "/api/auth/register/verify-phone" && method === "POST") {
 		return registerVerifyPhone(request, env);
 	}
+	if (pathname === "/api/auth/register/google" && method === "POST") {
+		return registerGoogle(request, env);
+	}
 
-	// Auth — Login
+	// ─── LOGIN (/api/auth/login/*) ─────────────────────────────
 	if (pathname === "/api/auth/login/mobile/send-otp" && method === "POST") {
 		return loginMobileSendOtp(request, env);
 	}
 	if (pathname === "/api/auth/login/mobile/verify" && method === "POST") {
 		return loginMobileVerify(request, env);
 	}
-	if (pathname === "/api/auth/login/email" && method === "POST") return loginEmail(request, env);
+	if (pathname === "/api/auth/login/email" && method === "POST") {
+		return loginEmail(request, env);
+	}
+	if (pathname === "/api/auth/login/google" && method === "POST") {
+		return loginGoogle(request, env);
+	}
 
-	// Legacy aliases
-	if (pathname === "/api/auth/send-otp" && method === "POST") return sendOtp(request, env);
-	if (pathname === "/api/auth/verify-otp" && method === "POST") return verifyOtp(request, env);
+	// Legacy → login (registered users only)
+	if (pathname === "/api/auth/send-otp" && method === "POST") {
+		return loginMobileSendOtp(request, env);
+	}
+	if (pathname === "/api/auth/verify-otp" && method === "POST") {
+		return loginMobileVerify(request, env);
+	}
 
+	// Profile
 	if (pathname === "/api/auth/sms-status" && method === "GET") return smsStatus(request, env);
 	if (pathname === "/api/auth/me" && method === "GET") return getMe(request, env);
 	if (pathname === "/api/auth/me" && method === "PUT") return updateMe(request, env);
@@ -100,10 +113,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response | 
 		return userOrders(request, env, Number(userOrdersMatch[1]));
 	}
 	const orderMatch = pathname.match(/^\/api\/orders\/(\d+)$/);
-	if (orderMatch) {
-		const id = Number(orderMatch[1]);
-		if (method === "GET") return getOrder(request, env, id);
-	}
+	if (orderMatch && method === "GET") return getOrder(request, env, Number(orderMatch[1]));
 	const skipMatch = pathname.match(/^\/api\/orders\/(\d+)\/skip$/);
 	if (skipMatch && method === "POST") return skipOrder(request, env, Number(skipMatch[1]));
 
